@@ -18,10 +18,15 @@ import androidx.fragment.app.Fragment;
 import com.example.chatme.R;
 import com.example.chatme.chat.ChatAdapter;
 import com.example.chatme.chat.ChatMessage;
-import com.example.chatme.chat.ChatMessagesList;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -123,11 +128,8 @@ public class Fragment_Chat extends Fragment {
             public void onClick(View v) {
                 // EditText에서 사용자 입력 가져오기
                 String userMessage = userInput.getText().toString();
-
                 // 입력 처리하기
                 String chatbotResponse = processUserMessage(userMessage);
-
-                // 응답을 적절한 방법으로 표시하기 (예: TextView에 표시)
             }
         });
 
@@ -140,7 +142,7 @@ public class Fragment_Chat extends Fragment {
 
         // ChatAdapter 인스턴스 생성
         ChatAdapter chatAdapter = new ChatAdapter(getActivity(), ChatMessagesList);
-
+        // 새로운 정보 갱신
         chatAdapter.notifyDataSetChanged();
 
         // 2. 사용자 입력 메시지를 서버로 전송한다.
@@ -152,10 +154,10 @@ public class Fragment_Chat extends Fragment {
         // 4. 서버 응답 메시지를 리스트뷰에 추가한다.
         ChatMessage botChatMessage = new ChatMessage(response, false);
         ChatMessagesList.add(botChatMessage);
+        // 새로운 정보 갱신
         chatAdapter.notifyDataSetChanged();
 
         // 5. 챗봇 응답 메시지를 반환한다.
         return response;
     }
-
 }
