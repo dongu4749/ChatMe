@@ -1,8 +1,12 @@
 package com.example.chatme.Fragment;
 
+import static androidx.constraintlayout.widget.ConstraintLayoutStates.TAG;
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.telecom.Call;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +22,7 @@ import androidx.fragment.app.Fragment;
 import com.example.chatme.R;
 import com.example.chatme.chat.ChatAdapter;
 import com.example.chatme.chat.ChatMessage;
+import com.google.common.net.MediaType;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,6 +36,12 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -121,7 +132,10 @@ public class Fragment_Chat extends Fragment {
         // UI 요소 가져오기
         userInput = view.findViewById(R.id.user_input);
         sendButton = view.findViewById(R.id.send_button);
+        chatListView = view.findViewById(R.id.chat_listview);
 
+        chatAdapter = new ChatAdapter(getActivity(), new ArrayList<ChatMessage>());
+        chatListView.setAdapter(chatAdapter);
         // 버튼에 이벤트 처리기 등록
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -130,34 +144,78 @@ public class Fragment_Chat extends Fragment {
                 String userMessage = userInput.getText().toString();
                 // 입력 처리하기
                 String chatbotResponse = processUserMessage(userMessage);
+                // 채팅창에 메시지 추가하기
+                chatAdapter.add(new ChatMessage(userMessage, true));
+                chatAdapter.add(new ChatMessage(chatbotResponse, false));
+                // EditText 비우기
+                userInput.getText().clear();
+                // 리스트뷰 자동 스크롤
+                chatListView.setSelection(chatAdapter.getCount() - 1);
             }
         });
 
         return view;
     }
     private String processUserMessage(String userMessage) {
-        // 1. 사용자 입력 메시지를 리스트뷰에 추가한다.
         ChatMessage userChatMessage = new ChatMessage(userMessage, true);
         ChatMessagesList.add(userChatMessage);
 
-        // ChatAdapter 인스턴스 생성
-        ChatAdapter chatAdapter = new ChatAdapter(getActivity(), ChatMessagesList);
-        // 새로운 정보 갱신
-        chatAdapter.notifyDataSetChanged();
+        // 서버로 메시지 전송
+        String chatbotResponse = sendToServer(userMessage);
 
-        // 2. 사용자 입력 메시지를 서버로 전송한다.
-        sendToServer(userMessage);
+        return chatbotResponse;
+    }
 
-        // 3. 서버로부터 응답 메시지를 받는다.
-        String response = receiveFromServer();
+    private String sendToServer(String message) {
+        String response = "";
+        try {
+            // HttpURLConnection을 이용하여 서버와 통신하기
+            URL url = new URL("https://api.example.com/chatbot");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
 
-        // 4. 서버 응답 메시지를 리스트뷰에 추가한다.
-        ChatMessage botChatMessage = new ChatMessage(response, false);
-        ChatMessagesList.add(botChatMessage);
-        // 새로운 정보 갱신
-        chatAdapter.notifyDataSetChanged();
+            // 요청 본문 데이터 생성
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("message", message);
 
-        // 5. 챗봇 응답 메시지를 반환한다.
+            // 요청 전송
+            OutputStream os = conn.getOutputStream();
+            os.write(requestBody.toString().getBytes());
+            os.flush();
+
+            // 응답 수신
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            response = convertStreamToString(in);
+
+            conn.disconnect();
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
         return response;
     }
+    private String convertStreamToString(InputStream is) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return sb.toString();
+    }
+
+
+
 }

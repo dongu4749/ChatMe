@@ -31,5 +31,11 @@
 
     </LinearLayout>
 
+    <!-- 채팅 내용을 표시할 TextView -->
+    <TextView
+        android:id="@+id/chat_textview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp" />
 
 </LinearLayout>
