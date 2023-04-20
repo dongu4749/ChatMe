@@ -1,11 +1,8 @@
 package com.example.chatme.Fragment;
 
-import static androidx.constraintlayout.widget.ConstraintLayoutStates.TAG;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.telecom.Call;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -22,7 +20,6 @@ import androidx.fragment.app.Fragment;
 import com.example.chatme.R;
 import com.example.chatme.chat.ChatAdapter;
 import com.example.chatme.chat.ChatMessage;
-import com.google.common.net.MediaType;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,19 +34,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link Fragment_Chat#newInstance} factory method to
  * create an instance of this fragment.
  */
 public class Fragment_Chat extends Fragment {
-
+    private static final String TAG = "Server";
     private ListView chatListView;
     private ChatAdapter chatAdapter;
     private ArrayList<ChatMessage> ChatMessagesList = new ArrayList<>();
@@ -166,35 +157,60 @@ public class Fragment_Chat extends Fragment {
         return chatbotResponse;
     }
 
-    private String sendToServer(String message) {
-        String response = "";
+    private String sendToServer(final String message) {
+        final StringBuilder response = new StringBuilder();
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // HttpURLConnection을 이용하여 서버와 통신하기
+                    URL url = new URL("http://10.0.2.2:5000/chat");
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.setRequestProperty("Accept", "application/json");
+
+                    // 요청 본문 작성
+                    JSONObject jsonParam = new JSONObject();
+                    jsonParam.put("message", message);
+
+                    // 서버로 요청 전송
+                    OutputStream os = conn.getOutputStream();
+                    os.write(jsonParam.toString().getBytes("UTF-8"));
+                    os.flush();
+
+                    // 서버에서 응답 수신
+                    InputStream in = new BufferedInputStream(conn.getInputStream());
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+
+                    // 연결 해제
+                    os.close();
+                    in.close();
+                    conn.disconnect();
+                } catch (IOException | JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
         try {
-            // HttpURLConnection을 이용하여 서버와 통신하기
-            URL url = new URL("https://api.example.com/chatbot");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-
-            // 요청 본문 데이터 생성
-            JSONObject requestBody = new JSONObject();
-            requestBody.put("message", message);
-
-            // 요청 전송
-            OutputStream os = conn.getOutputStream();
-            os.write(requestBody.toString().getBytes());
-            os.flush();
-
-            // 응답 수신
-            InputStream in = new BufferedInputStream(conn.getInputStream());
-            response = convertStreamToString(in);
-
-            conn.disconnect();
-        } catch (IOException | JSONException e) {
+            thread.join();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return response;
+
+        return response.toString();
     }
+
+
     private String convertStreamToString(InputStream is) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();

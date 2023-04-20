@@ -71,10 +71,14 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage>  {
 
         ChatMessage message = messages.get(position);
         viewHolder.messageTextView.setText(message.getMessage());
-        viewHolder.messageBackground.setBackgroundResource(message.getBackgroundColor());
+
+        if (viewHolder.messageBackground != null) { // messageBackground이 null이 아닌 경우에만 setBackgroundResource 호출
+            viewHolder.messageBackground.setBackgroundResource(message.getBackgroundColor());
+        }
 
         return convertView;
     }
+
 
     private static class ViewHolder {
         TextView messageTextView;
