@@ -4,28 +4,32 @@ import android.icu.text.SimpleDateFormat;
 
 import com.example.chatme.R;
 
+import java.util.Date;
 import java.util.Locale;
 
 public class ChatMessage {
     private String message;
     private boolean sentByUser;
 
-//    private long messageTime;
+
 
 
     public ChatMessage(String message, boolean sentByUser) {
         this.message = message;
         this.sentByUser = sentByUser;
-//        this.messageTime = System.currentTimeMillis();
+
     }
 
     public String getMessage() {
         return message;
     }
 
-//    public long getMessageTime() {
-//        return messageTime;
-//    }
+
+    public String getTimeStamp() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        Date date = new Date();
+        return dateFormat.format(date);
+    }
 
     public boolean isSentByUser() {
         return sentByUser;

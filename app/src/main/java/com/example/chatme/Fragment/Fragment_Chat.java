@@ -1,5 +1,7 @@
 package com.example.chatme.Fragment;
 
+import static java.lang.System.in;
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -33,6 +35,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+
+import okhttp3.Response;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -183,16 +187,18 @@ public class Fragment_Chat extends Fragment {
                     os.flush();
 
                     // 서버에서 응답 수신
-                    InputStream in = new BufferedInputStream(conn.getInputStream());
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
+                    if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        InputStream in = new BufferedInputStream(conn.getInputStream());
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+                        in.close();
                     }
 
                     // 연결 해제
                     os.close();
-                    in.close();
                     conn.disconnect();
                 } catch (IOException | JSONException e) {
                     e.printStackTrace();
@@ -203,12 +209,15 @@ public class Fragment_Chat extends Fragment {
         thread.start();
         try {
             thread.join();
+            String extractedResponse = extractResponse(response.toString());
+            return extractedResponse;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         return response.toString();
     }
+
 
 
     private String convertStreamToString(InputStream is) {
@@ -232,6 +241,21 @@ public class Fragment_Chat extends Fragment {
         return sb.toString();
     }
 
+    private String extractResponse(String response) {
+        try {
+            // JSON 파싱
+            JSONObject jsonResponse = new JSONObject(response);
+
+            // 필요한 키(예: "response")의 값 추출
+            String extractedResponse = jsonResponse.getString("response");
+
+            return extractedResponse;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
 
 
 }

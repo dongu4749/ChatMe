@@ -1,9 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="start"
-    android:orientation="horizontal"
     android:padding="16dp">
 
     <TextView
@@ -12,7 +9,16 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bot_message_background"
         android:padding="8dp"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:textSize="16sp" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/bot_message_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/black"
+        android:textSize="12sp"
+        android:layout_below="@id/bot_message_text"
+        android:layout_marginTop="4dp" />
+
+</RelativeLayout>
