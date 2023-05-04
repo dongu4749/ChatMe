@@ -10,10 +10,6 @@ import java.util.Locale;
 public class ChatMessage {
     private String message;
     private boolean sentByUser;
-
-
-
-
     public ChatMessage(String message, boolean sentByUser) {
         this.message = message;
         this.sentByUser = sentByUser;
@@ -23,7 +19,6 @@ public class ChatMessage {
     public String getMessage() {
         return message;
     }
-
 
     public String getTimeStamp() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());

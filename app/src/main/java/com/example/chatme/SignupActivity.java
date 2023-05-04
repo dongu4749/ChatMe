@@ -2,6 +2,7 @@ package com.example.chatme;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -13,6 +14,14 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+
+import java.io.IOException;
+
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 
 public class SignupActivity extends AppCompatActivity {
@@ -37,7 +46,6 @@ public class SignupActivity extends AppCompatActivity {
             }
         };
 
-
         private void signUp(){
             String id=((EditText)findViewById(R.id.user_id)).getText().toString();
             String password=((EditText)findViewById(R.id.user_password)).getText().toString();
@@ -50,6 +58,7 @@ public class SignupActivity extends AppCompatActivity {
                                 @Override
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if (task.isSuccessful()) {
+                                        sendDataToServer(id);
                                         Toast.makeText(SignupActivity.this, "회원가입에 성공했습니다." ,Toast.LENGTH_SHORT).show();
                                         Intent intent = new Intent(getApplicationContext(), SigninActivity.class);
                                         startActivity(intent);
@@ -70,5 +79,48 @@ public class SignupActivity extends AppCompatActivity {
             }
         }
 
+    private void sendDataToServer(String id) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                OkHttpClient client = new OkHttpClient();
 
+                // 이메일을 파라미터로 포함한 폼 바디 생성
+                RequestBody formBody = new FormBody.Builder()
+                        .add("id", id)
+                        .build();
+
+                // 폼 바디를 포함한 POST 요청 생성
+                Request request = new Request.Builder()
+                        .url("http://10.0.2.2:5000/signup") // 여기에 Flask 서버의 실제 URL을 입력하세요.
+                        .post(formBody)
+                        .build();
+
+                try {
+                    // 요청 보내기
+                    Response response = client.newCall(request).execute();
+
+                    if (response.isSuccessful()) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.d("SignupActivity", "서버 응답 코드" + response.code());
+                            }
+                        });
+                    } else {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.d("SignupActivity", "서버 응답 코드" + response.code());
+                            }
+                        });
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
+    }
 }
