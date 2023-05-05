@@ -10,10 +10,12 @@ import java.util.Locale;
 public class ChatMessage {
     private String message;
     private boolean sentByUser;
-    public ChatMessage(String message, boolean sentByUser) {
+    private String timeStamp; // 추가
+
+    public ChatMessage(String message, boolean sentByUser, String timeStamp) { // 수정
         this.message = message;
         this.sentByUser = sentByUser;
-
+        this.timeStamp = timeStamp; // 추가
     }
 
     public String getMessage() {
@@ -21,9 +23,7 @@ public class ChatMessage {
     }
 
     public String getTimeStamp() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-        Date date = new Date();
-        return dateFormat.format(date);
+        return timeStamp;
     }
 
     public boolean isSentByUser() {
@@ -38,3 +38,4 @@ public class ChatMessage {
         }
     }
 }
+

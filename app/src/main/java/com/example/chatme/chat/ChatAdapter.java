@@ -80,8 +80,6 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage>  {
             viewHolder.messageBackground.setBackgroundResource(message.getBackgroundColor());
         }
 
-
-
         return convertView;
     }
 

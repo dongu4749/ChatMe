@@ -1,28 +1,33 @@
 package com.example.chatme.Fragment;
 
-import static java.lang.System.in;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.chatme.R;
 import com.example.chatme.chat.ChatAdapter;
 import com.example.chatme.chat.ChatMessage;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -35,21 +40,22 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-
-import okhttp3.Response;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link Fragment_Chat#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class Fragment_Chat extends Fragment {
+public class  Fragment_Chat extends Fragment {
     private static final String TAG = "Server";
     private ListView chatListView;
     private ChatAdapter chatAdapter;
     private ArrayList<ChatMessage> ChatMessagesList = new ArrayList<>();
     private EditText userInput;
     private Button sendButton;
+
+    private FirebaseAuth firebaseAuth;
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -88,6 +94,9 @@ public class Fragment_Chat extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        firebaseAuth = FirebaseAuth.getInstance();
+
         OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
 
             @Override
@@ -137,24 +146,20 @@ public class Fragment_Chat extends Fragment {
             public void onClick(View v) {
                 // EditText에서 사용자 입력 가져오기
                 String userMessage = userInput.getText().toString();
+
                 // 입력 처리하기
                 String chatbotResponse = processUserMessage(userMessage);
-                // 채팅창에 메시지 추가하기
-                chatAdapter.add(new ChatMessage(userMessage, true));
-                chatAdapter.add(new ChatMessage(chatbotResponse, false));
+
                 // EditText 비우기
                 userInput.getText().clear();
                 // 리스트뷰 자동 스크롤
                 chatListView.setSelection(chatAdapter.getCount() - 1);
             }
         });
-
+        getChatHistory();
         return view;
     }
     private String processUserMessage(String userMessage) {
-        ChatMessage userChatMessage = new ChatMessage(userMessage, true);
-        ChatMessagesList.add(userChatMessage);
-
         // 서버로 메시지 전송
         String chatbotResponse = sendToServer(userMessage);
 
@@ -179,6 +184,9 @@ public class Fragment_Chat extends Fragment {
 
                     // 요청 본문 작성
                     JSONObject jsonParam = new JSONObject();
+                    FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                    String userid = currentUser.getUid();
+                    jsonParam.put("user_id", userid);
                     jsonParam.put("message", message);
 
                     // 서버로 요청 전송
@@ -200,6 +208,7 @@ public class Fragment_Chat extends Fragment {
                     // 연결 해제
                     os.close();
                     conn.disconnect();
+                    getChatHistory();
                 } catch (IOException | JSONException e) {
                     e.printStackTrace();
                 }
@@ -255,6 +264,69 @@ public class Fragment_Chat extends Fragment {
         }
 
         return "";
+    }
+    private void getChatHistory() {
+        // 서버 URL 설정
+        String url = "http://10.0.2.2:5000/chat_history";
+
+        // Firebase에서 현재 사용자의 UID 가져오기
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        String uid = currentUser.getUid();
+
+        // 요청 파라미터 생성
+        JSONObject jsonParams = new JSONObject();
+        try {
+            jsonParams.put("user_id", uid);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // POST 요청 보내기
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonParams,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray chatHistoryArray = response.getJSONArray("chat_history");
+
+                            // 채팅 내역 저장
+                            List<ChatMessage> chatMessages = new ArrayList<>();
+
+                            // 채팅 내역 출력
+                            for (int i = 0; i < chatHistoryArray.length(); i++) {
+                                JSONObject messageObj = chatHistoryArray.getJSONObject(i);
+                                String content = messageObj.getString("content");
+                                String time = messageObj.getString("time");
+                                int isUserInt = messageObj.getInt("isUser");
+                                boolean sentByUser = (isUserInt == 1); // 정수값을 boolean으로 변환
+
+                                // ChatMessage 생성 시에 시간 정보도 함께 전달
+                                ChatMessage chatMessage = new ChatMessage(content, sentByUser, time);
+                                chatMessages.add(chatMessage);
+                            }
+
+                            // 채팅 내역을 화면에 업데이트
+                            chatAdapter.clear();
+                            chatAdapter.addAll(chatMessages);
+                            chatAdapter.notifyDataSetChanged();
+
+                            // 가장 최근 메시지로 스크롤 이동
+                            chatListView.setSelection(chatAdapter.getCount() - 1);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // 오류 처리
+                    }
+                });
+
+        // 요청 큐에 요청 추가
+        RequestQueue queue = Volley.newRequestQueue(requireContext());
+        queue.add(request);
     }
 
 

@@ -58,7 +58,8 @@ public class SignupActivity extends AppCompatActivity {
                                 @Override
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if (task.isSuccessful()) {
-                                        sendDataToServer(id);
+                                        String uid = mAuth.getCurrentUser().getUid(); // 사용자의 UID 가져오기
+                                        sendDataToServer(uid);
                                         Toast.makeText(SignupActivity.this, "회원가입에 성공했습니다." ,Toast.LENGTH_SHORT).show();
                                         Intent intent = new Intent(getApplicationContext(), SigninActivity.class);
                                         startActivity(intent);
@@ -79,7 +80,7 @@ public class SignupActivity extends AppCompatActivity {
             }
         }
 
-    private void sendDataToServer(String id) {
+    private void sendDataToServer(String uid) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -87,7 +88,7 @@ public class SignupActivity extends AppCompatActivity {
 
                 // 이메일을 파라미터로 포함한 폼 바디 생성
                 RequestBody formBody = new FormBody.Builder()
-                        .add("id", id)
+                        .add("uid", uid)
                         .build();
 
                 // 폼 바디를 포함한 POST 요청 생성
