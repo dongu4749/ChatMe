@@ -1,14 +1,24 @@
 package com.example.chatme.Fragment;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -33,6 +43,8 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,6 +53,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -55,6 +73,9 @@ public class  Fragment_Chat extends Fragment {
     private EditText userInput;
     private Button sendButton;
 
+    private static final int REQUEST_IMAGE_PICK = 1;
+
+    private Uri selectedImageUri;
     private FirebaseAuth firebaseAuth;
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -137,6 +158,17 @@ public class  Fragment_Chat extends Fragment {
         userInput = view.findViewById(R.id.user_input);
         sendButton = view.findViewById(R.id.send_button);
         chatListView = view.findViewById(R.id.chat_listview);
+
+        Button plusButton = view.findViewById(R.id.plus_button);
+        plusButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 사진 전송 로직을 처리하는 메서드를 호출합니다.
+                sendPhoto();
+                // 리스트뷰 자동 스크롤
+                chatListView.setSelection(chatAdapter.getCount() - 1);
+            }
+        });
 
         chatAdapter = new ChatAdapter(getActivity(), new ArrayList<ChatMessage>());
         chatListView.setAdapter(chatAdapter);
@@ -312,6 +344,7 @@ public class  Fragment_Chat extends Fragment {
 
                             // 가장 최근 메시지로 스크롤 이동
                             chatListView.setSelection(chatAdapter.getCount() - 1);
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -329,5 +362,93 @@ public class  Fragment_Chat extends Fragment {
         queue.add(request);
     }
 
+    private void sendPhoto() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+
+        // 사진 선택을 위한 액티비티 실행
+        startActivityForResult(intent, REQUEST_IMAGE_PICK);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_IMAGE_PICK && resultCode == Activity.RESULT_OK && data != null) {
+            // 선택한 사진의 Uri를 가져옴
+            selectedImageUri = data.getData();
+
+            // 업로드할 사진을 처리하는 메서드 호출
+            uploadPhoto();
+        }
+    }
+
+    private void uploadPhoto() {
+        String url = "http://10.0.2.2:5000/photo"; // Flask 서버의 업로드 URL로 변경
+
+        // Volley의 RequestQueue 생성
+        RequestQueue requestQueue = Volley.newRequestQueue(getActivity());
+
+        // 이미지 파일을 바이트 배열로 변환
+        byte[] imageBytes = getImageBytes(selectedImageUri);
+
+        // 이미지 파일을 Base64 인코딩
+        String imageBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+
+        // Firebase에서 현재 사용자의 UID 가져오기
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        String uid = currentUser.getUid();
+
+        // 요청 파라미터 생성
+        JSONObject jsonParams = new JSONObject();
+        try {
+            jsonParams.put("image", imageBase64);
+            jsonParams.put("id", uid);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // JsonObjectRequest 생성
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonParams,
+                response -> {
+                    // 응답 처리
+                    try {
+                        String photoString = response.getString("photo");
+                        // Base64 디코딩하여 비트맵으로 변환
+                        byte[] photoBytes = Base64.decode(photoString, Base64.DEFAULT);
+                        Bitmap photoBitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.length);
+
+//                        // 이미지 뷰에 출력
+//                        chatListView.setImageBitmap(photoBitmap);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                },
+                error -> {
+                    // 오류 처리
+                    Toast.makeText(getActivity(), "Error occurred: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+
+        // 요청을 RequestQueue에 추가
+        requestQueue.add(request);
+    }
+
+
+    // Uri로부터 이미지 파일을 바이트 배열로 변환하는 메서드
+    private byte[] getImageBytes(Uri uri) {
+        try {
+            InputStream inputStream = getActivity().getContentResolver().openInputStream(uri);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            }
+            return byteArrayOutputStream.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
 }
