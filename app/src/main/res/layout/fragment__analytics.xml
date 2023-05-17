@@ -5,17 +5,40 @@
     android:layout_height="match_parent"
     tools:context=".Fragment.Fragment_Analytics">
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+    <!-- 날짜 표시 -->
+    <TextView
+        android:id="@+id/dateTextView"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="날짜"
+        android:layout_marginTop="10dp"
         android:gravity="center"
-        android:layout_height="match_parent">
+        android:textSize="24sp"/>
 
-        <com.github.mikephil.charting.charts.BarChart
-            android:layout_height="300dp"
-            android:layout_width="match_parent"
-            android:id="@+id/chart"/>
+    <!-- 토글 버튼 -->
+    <ToggleButton
+        android:id="@+id/toggleButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:checked="false"
+        android:background="@drawable/toggle_button"
+        android:layout_gravity="right"
+        android:textOn=""
+        android:textOff=""/>
 
-    </RelativeLayout>
+    <!-- 원형 그래프 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <com.github.mikephil.charting.charts.PieChart
+            android:id="@+id/piechart"
+            android:layout_width="400dp"
+            android:layout_height="400dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
 </FrameLayout>

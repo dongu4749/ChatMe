@@ -4,19 +4,19 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -44,7 +44,6 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -52,12 +51,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.RequestBody;
+import java.util.Locale;
 
 
 /**
@@ -69,7 +65,6 @@ public class  Fragment_Chat extends Fragment {
     private static final String TAG = "Server";
     private ListView chatListView;
     private ChatAdapter chatAdapter;
-    private ArrayList<ChatMessage> ChatMessagesList = new ArrayList<>();
     private EditText userInput;
     private Button sendButton;
 
@@ -148,7 +143,6 @@ public class  Fragment_Chat extends Fragment {
         requireActivity().getOnBackPressedDispatcher().addCallback(this, callback);
     }
 
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -191,6 +185,7 @@ public class  Fragment_Chat extends Fragment {
         getChatHistory();
         return view;
     }
+
     private String processUserMessage(String userMessage) {
         // 서버로 메시지 전송
         String chatbotResponse = sendToServer(userMessage);
@@ -413,13 +408,13 @@ public class  Fragment_Chat extends Fragment {
                 response -> {
                     // 응답 처리
                     try {
-                        String photoString = response.getString("photo");
+                        String photoString = response.getString("image");
                         // Base64 디코딩하여 비트맵으로 변환
                         byte[] photoBytes = Base64.decode(photoString, Base64.DEFAULT);
                         Bitmap photoBitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.length);
-
-//                        // 이미지 뷰에 출력
-//                        chatListView.setImageBitmap(photoBitmap);
+                        // 이미지 뷰에 출력
+                        ChatMessage chatMessage = new ChatMessage(photoBitmap, true, getCurrentTimeStamp());
+                        chatAdapter.add(chatMessage);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -432,7 +427,6 @@ public class  Fragment_Chat extends Fragment {
         // 요청을 RequestQueue에 추가
         requestQueue.add(request);
     }
-
 
     // Uri로부터 이미지 파일을 바이트 배열로 변환하는 메서드
     private byte[] getImageBytes(Uri uri) {
@@ -449,6 +443,10 @@ public class  Fragment_Chat extends Fragment {
             e.printStackTrace();
             return null;
         }
+    }
+    private String getCurrentTimeStamp() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        return sdf.format(new Date());
     }
 
 }

@@ -1,35 +1,34 @@
 package com.example.chatme.chat;
 
-import android.icu.text.SimpleDateFormat;
+import android.graphics.Bitmap;
 
 import com.example.chatme.R;
-
-import java.util.Date;
-import java.util.Locale;
 
 public class ChatMessage {
     private String message;
     private boolean sentByUser;
-    private String timeStamp; // 추가
+    private String timeStamp;
 
-    public ChatMessage(String message, boolean sentByUser, String timeStamp) { // 수정
+    private Bitmap imageBitmap;
+    public ChatMessage(String message, boolean sentByUser, String timeStamp) {
         this.message = message;
         this.sentByUser = sentByUser;
-        this.timeStamp = timeStamp; // 추가
+        this.timeStamp = timeStamp;
     }
-
+    public ChatMessage(Bitmap imageBitmap, boolean sentByUser, String timeStamp) {
+        this.imageBitmap = imageBitmap;
+        this.sentByUser = sentByUser;
+        this.timeStamp = timeStamp;
+    }
     public String getMessage() {
         return message;
     }
-
     public String getTimeStamp() {
         return timeStamp;
     }
-
     public boolean isSentByUser() {
         return sentByUser;
     }
-
     public int getBackgroundColor() {
         if (isSentByUser()) {
             return R.color.user_message_background_color;
@@ -37,5 +36,7 @@ public class ChatMessage {
             return R.color.bot_message_background_color;
         }
     }
+    public Bitmap getImageBitmap() {
+        return imageBitmap;
+    }
 }
-

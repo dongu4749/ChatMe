@@ -3,24 +3,38 @@ package com.example.chatme.Fragment;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.fragment.app.Fragment;
 
 import com.example.chatme.R;
+import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -34,7 +48,10 @@ public class Fragment_Analytics extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     //선 그래프
-    private BarChart barChart;
+    private TextView dateTextView;
+    private ToggleButton toggleButton;
+    private PieChart pieChart;
+
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -105,50 +122,82 @@ public class Fragment_Analytics extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment__analytics, container, false);
 
-        ArrayList<BarEntry> entry_chart = new ArrayList<>(); // 데이터를 담을 Arraylist
+        // Find views by ID
+        dateTextView = view.findViewById(R.id.dateTextView);
+        toggleButton = view.findViewById(R.id.toggleButton);
+        pieChart = view.findViewById(R.id.piechart);
 
-        barChart = (BarChart)view.findViewById(R.id.chart);
+        // Set the date text view to the current date
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy년 MM월 dd일");
+        String currentDate = sdf.format(new Date());
+        dateTextView.setText(currentDate);
 
-        BarData barData = new BarData(); // 차트에 담길 데이터
+        // Set up the pie chart
+        pieChart.setUsePercentValues(true);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setDrawHoleEnabled(false);
 
-        entry_chart.add(new BarEntry(1, 1)); //entry_chart1에 좌표 데이터를 담는다.
-        entry_chart.add(new BarEntry(2, 2));
-        entry_chart.add(new BarEntry(3, 3));
-        entry_chart.add(new BarEntry(4, 4));
-        entry_chart.add(new BarEntry(5, 5));
-        entry_chart.add(new BarEntry(6, 6));
-
-        BarDataSet barDataSet = new BarDataSet(entry_chart, "bardataset"); // 데이터가 담긴 Arraylist 를 BarDataSet 으로 변환한다.
-
-        barDataSet.setColors(new int[] {Color.RED, Color.YELLOW, Color.BLUE,
-                Color.GREEN, Color.MAGENTA, Color.rgb(255, 140, 0)});
-
-
-        barData.addDataSet(barDataSet); // 해당 BarDataSet 을 적용될 차트에 들어갈 DataSet 에 넣는다.
-
-        barChart.setData(barData); // 차트에 위의 DataSet 을 넣는다.
-
-        XAxis xAxis = barChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM); // X축 레이블을 아래에 위치시킴
-        xAxis.setTextSize(14f); // x축 레이블 크기 설정
-        xAxis.setValueFormatter(new ValueFormatter() {
+        // Set up the toggle button
+        toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public String getFormattedValue(float value) {
-                int index = (int) value - 1;
-                String[] labels = new String[] {"분노", "기쁨", "불안", "놀람", "슬픔", "혐오"};
-                return labels[index];
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if (isChecked) {
+                    pieChart.setVisibility(View.VISIBLE);
+                } else {
+                    pieChart.setVisibility(View.GONE);
+                }
             }
         });
-        YAxis leftAxis = barChart.getAxisLeft();
-        leftAxis.setTextSize(14f); // y축 레이블 크기 설정
-        barChart.getDescription().setEnabled(false); // 그래프 위에 Description 제거
-        barChart.getLegend().setEnabled(false); // 그래프 범례 제거
-        barChart.getAxisRight().setEnabled(false);
-        barChart.invalidate(); // 차트 업데이트
-        barChart.setTouchEnabled(false); // 차트 터치 불가능하게
 
+        pieChart.setUsePercentValues(true);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setExtraOffsets(5, 10, 5, 5);
+
+        pieChart.setDragDecelerationFrictionCoef(0.95f);
+
+        pieChart.setDrawHoleEnabled(false);
+        pieChart.setTransparentCircleRadius(0f); // 크기 반으로 줄이기
+
+        int[] colors = new int[]{
+                Color.parseColor("#FF6B6B"), // 분노 (연한 빨강)
+                Color.parseColor("#FFB347"), // 기쁨 (주황색)
+                Color.parseColor("#BA8BC8"), // 불안 (연한 보라색)
+                Color.parseColor("#32CD32"), // 놀람 (연한 초록)
+                Color.parseColor("#A4D3EE"), // 슬픔 (연한 파랑색)
+                Color.parseColor("#595959"), // 혐오 (검정색)
+                Color.parseColor("#BEBEBE") // 중립 (회색)
+        };
+
+        ArrayList<PieEntry> yValues = new ArrayList<PieEntry>();
+
+        yValues.add(new PieEntry(60f, "분노"));
+        yValues.add(new PieEntry(50f, "기쁨"));
+        yValues.add(new PieEntry(40f, "불안"));
+        yValues.add(new PieEntry(30f, "놀람"));
+        yValues.add(new PieEntry(20f, "슬픔"));
+        yValues.add(new PieEntry(20f, "혐오"));
+        yValues.add(new PieEntry(20f, "중립"));
+
+        pieChart.animateY(1000, Easing.EaseInOutCubic); // 애니메이션
+
+        PieDataSet dataSet = new PieDataSet(yValues, "감정 종류");
+        dataSet.setSliceSpace(3f);
+        dataSet.setSelectionShift(5f);
+        dataSet.setColors(colors);
+        dataSet.setValueTextSize(12f);
+        dataSet.setValueTextColor(Color.BLACK); // 글씨 색상 검정색으로 변경
+        dataSet.setColors(colors);
+
+        PieData data = new PieData(dataSet);
+        data.setValueTextSize(15f); // 글꼴 크기 16dp로 변경
+        data.setValueTextColor(Color.BLACK); // 글자색 검정색으로 변경
+
+        pieChart.invalidate();
+        pieChart.setTouchEnabled(false);
+        pieChart.setData(data);
 
         return view;
+
     }
 
 }
