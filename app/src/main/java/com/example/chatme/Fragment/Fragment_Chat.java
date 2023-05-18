@@ -328,7 +328,18 @@ public class  Fragment_Chat extends Fragment {
                                 boolean sentByUser = (isUserInt == 1); // 정수값을 boolean으로 변환
 
                                 // ChatMessage 생성 시에 시간 정보도 함께 전달
-                                ChatMessage chatMessage = new ChatMessage(content, sentByUser, time);
+                                ChatMessage chatMessage;
+
+                                if (messageObj.has("image")) {
+                                    // 이미지가 있는 경우
+                                    String imageString = messageObj.getString("image");
+                                    Bitmap imageBitmap = decodeBase64Image(imageString);
+                                    chatMessage = new ChatMessage(imageBitmap, sentByUser, time);
+                                } else {
+                                    // 텍스트 메시지인 경우
+                                    chatMessage = new ChatMessage(content, sentByUser, time);
+                                }
+
                                 chatMessages.add(chatMessage);
                             }
 
@@ -423,7 +434,7 @@ public class  Fragment_Chat extends Fragment {
                     // 오류 처리
                     Toast.makeText(getActivity(), "Error occurred: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                 });
-
+        getChatHistory();
         // 요청을 RequestQueue에 추가
         requestQueue.add(request);
     }
@@ -447,6 +458,11 @@ public class  Fragment_Chat extends Fragment {
     private String getCurrentTimeStamp() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         return sdf.format(new Date());
+    }
+
+    private Bitmap decodeBase64Image(String imageString) {
+        byte[] imageBytes = Base64.decode(imageString, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
     }
 
 }

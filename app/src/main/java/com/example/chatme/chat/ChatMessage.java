@@ -8,7 +8,6 @@ public class ChatMessage {
     private String message;
     private boolean sentByUser;
     private String timeStamp;
-
     private Bitmap imageBitmap;
     public ChatMessage(String message, boolean sentByUser, String timeStamp) {
         this.message = message;
@@ -37,6 +36,10 @@ public class ChatMessage {
         }
     }
     public Bitmap getImageBitmap() {
-        return imageBitmap;
+        return imageBitmap; // Assuming you have an imageBitmap field in the ChatMessage class
+    }
+
+    public boolean hasImage() {
+        return imageBitmap != null; // Assuming you have an imageBitmap field in the ChatMessage class
     }
 }
