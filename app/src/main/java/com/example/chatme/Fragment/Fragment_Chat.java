@@ -16,7 +16,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -154,6 +153,7 @@ public class  Fragment_Chat extends Fragment {
         chatListView = view.findViewById(R.id.chat_listview);
 
         Button plusButton = view.findViewById(R.id.plus_button);
+        getChatHistory();
         plusButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -182,7 +182,6 @@ public class  Fragment_Chat extends Fragment {
                 chatListView.setSelection(chatAdapter.getCount() - 1);
             }
         });
-        getChatHistory();
         return view;
     }
 
