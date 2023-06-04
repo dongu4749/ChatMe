@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,8 +13,21 @@ import android.widget.CalendarView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.fragment.app.Fragment;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.example.chatme.Analytics.Analytics_Emotion;
 import com.example.chatme.Analytics.Analytics_Photo;
 import com.example.chatme.R;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -26,7 +40,7 @@ public class Fragment_Analytics extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-
+    private FirebaseAuth firebaseAuth;
 
 
     // TODO: Rename and change types of parameters
@@ -62,6 +76,7 @@ public class Fragment_Analytics extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+        firebaseAuth = FirebaseAuth.getInstance();
         OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
 
             @Override
@@ -113,27 +128,105 @@ public class Fragment_Analytics extends Fragment {
     private void showDateDialog(int year, int month, int dayOfMonth) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("선택한 날짜");
-        builder.setMessage("선택한 날짜: " + year + "년 " + (month + 1) + "월 " + dayOfMonth + "일");
-        builder.setPositiveButton("감정 분석 시각화", new DialogInterface.OnClickListener() {
+        // getDiarySummary() 호출하여 응답 받기
+        getDiarySummary(year, month, dayOfMonth, new VolleyCallback() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // 확인 버튼 클릭 시 처리할 내용을 추가합니다.
+            public void onSuccess(JSONArray diarySummary) {
+                try {
+                    String summary = "";
+                    for (int i = 0; i < diarySummary.length(); i++) {
+                        summary += diarySummary.getString(i);
+                        if (i < diarySummary.length() - 1) {
+                            summary += ", ";
+                        }
+                    }
+                    builder.setMessage(summary); // 메시지 설정은 응답을 받은 후에 호출되어야 합니다.
+                    builder.setPositiveButton("감정 분석 시각화", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent(getActivity(), Analytics_Emotion.class);
+
+                            // 선택한 날짜 정보를 Intent에 추가합니다.
+                            intent.putExtra("year", year);
+                            intent.putExtra("month", month);
+                            intent.putExtra("dayOfMonth", dayOfMonth);
+
+                            startActivity(intent);
+                        }
+                    });
+                    builder.setNegativeButton("사진 보기", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent(getActivity(), Analytics_Photo.class);
+
+                            // 선택한 날짜 정보를 Intent에 추가합니다.
+                            intent.putExtra("year", year);
+                            intent.putExtra("month", month);
+                            intent.putExtra("dayOfMonth", dayOfMonth);
+
+                            // Activity로 전환합니다.
+                            startActivity(intent);
+                        }
+                    });
+                    builder.create().show();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
-        builder.setNegativeButton("사진 보기", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(getActivity(), Analytics_Photo.class);
+    }
 
-                // 선택한 날짜 정보를 Intent에 추가합니다.
-                intent.putExtra("year", year);
-                intent.putExtra("month", month);
-                intent.putExtra("dayOfMonth", dayOfMonth);
+    private void getDiarySummary(int year, int month, int dayOfMonth, VolleyCallback callback) {
+        String url = "http://10.0.2.2:5000/diary";
 
-                // Activity로 전환합니다.
-                startActivity(intent);
-            }
-        });
-        builder.create().show();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        String uid = currentUser.getUid();
+
+        JSONObject jsonParams = new JSONObject();
+        try {
+            jsonParams.put("user_id", uid);
+            jsonParams.put("year", year);
+            jsonParams.put("month", month);
+            jsonParams.put("dayOfMonth", dayOfMonth);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // 로그로 요청 파라미터 확인
+        Log.d("Request Params", jsonParams.toString());
+
+        // POST 요청 보내기
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonParams,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            Log.d("Response", response.toString());
+
+                            String diarySummary = response.getString("diary_Summary"); // JSONArray가 아닌 문자열로 값을 가져옴
+
+                            JSONArray jsonArray = new JSONArray();
+                            jsonArray.put(diarySummary);
+
+                            callback.onSuccess(jsonArray);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // 오류 처리
+                    }
+                });
+
+        // 요청 큐에 요청 추가
+        RequestQueue queue = Volley.newRequestQueue(getActivity().getApplicationContext());
+        queue.add(request);
+    }
+
+    interface VolleyCallback {
+        void onSuccess(JSONArray diarySummary);
     }
 }

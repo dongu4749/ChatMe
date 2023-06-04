@@ -21,7 +21,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:itemIconTint="@drawable/bottom_navigation_select_color"
         app:itemTextColor="@drawable/bottom_navigation_select_color"
-        app:labelVisibilityMode="labeled"
+        app:labelVisibilityMode="unlabeled"
         app:menu="@menu/bottom_nav">
 
 

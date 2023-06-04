@@ -14,28 +14,38 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="@color/white">
+
+        <Button
+            android:id="@+id/plus_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/photo"
+            android:elevation="4dp"
+            android:scaleType="centerCrop"/>
 
         <EditText
             android:id="@+id/user_input"
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:hint="Type your message here" />
-
-        <Button
-            android:id="@+id/plus_button"
-            android:layout_width="48dp"
-            android:layout_height="wrap_content"
-            android:text="+"
-            android:textSize="20sp"
-            android:padding="8dp" />
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/message_tool"
+            android:hint="메시지 작성하기"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textSize="16sp"
+            android:singleLine="true"
+            android:imeOptions="flagNoExtractUi|actionSend"/>
 
         <Button
             android:id="@+id/send_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Send" />
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/send_button" />
 
 
     </LinearLayout>

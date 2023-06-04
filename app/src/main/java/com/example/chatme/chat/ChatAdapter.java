@@ -3,6 +3,7 @@ package com.example.chatme.chat;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage>  {
     private final int USER_MESSAGE = 0;
     private final int BOT_MESSAGE = 1;
 
+    private String currentDate = "";
     private Context context;
     private ArrayList<ChatMessage> messages;
 
@@ -68,10 +70,12 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage>  {
                 viewHolder.imageView = convertView.findViewById(R.id.message_image);
             } else {
                 convertView = inflater.inflate(R.layout.list_item_bot, parent, false);
+                viewHolder.profileImageView = convertView.findViewById(R.id.bot_profile_image);
                 viewHolder.messageTextView = convertView.findViewById(R.id.bot_message_text);
                 viewHolder.messageBackground = convertView.findViewById(R.id.bot_message_background_shape);
                 viewHolder.timeTextView = convertView.findViewById(R.id.bot_message_time);
                 viewHolder.imageView = convertView.findViewById(R.id.message_image);
+
             }
 
             convertView.setTag(viewHolder);
@@ -81,7 +85,9 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage>  {
 
         ChatMessage message = messages.get(position);
         viewHolder.messageTextView.setText(message.getMessage());
-        viewHolder.timeTextView.setText(message.getTimeStamp());
+        // Format and display the time
+        String time = formatTime(message.getTimeStamp());
+        viewHolder.timeTextView.setText(time);
 
         if (message.hasImage()) {
             // Display the image
@@ -115,5 +121,32 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage>  {
         View messageBackground;
         TextView timeTextView;
         ImageView imageView;
+        ImageView profileImageView;
     }
+
+    private String formatTime(String timestamp) {
+        // Assuming timestamp format is "yyyy-MM-dd HH:mm"
+        String[] parts = timestamp.split(" ");
+        String date = parts[0];
+        String time = parts[1];
+
+        String[] timeParts = time.split(":");
+        int hour = Integer.parseInt(timeParts[0]);
+        int minute = Integer.parseInt(timeParts[1]);
+
+        String period;
+        if (hour < 12) {
+            period = "오전";
+        } else {
+            period = "오후";
+            if (hour > 12) {
+                hour -= 12;
+            }
+        }
+
+        String minuteFormatted = (minute < 10) ? "0" + minute : String.valueOf(minute);
+
+        return period + " " + hour + ":" + minuteFormatted;
+    }
+
 }

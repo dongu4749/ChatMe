@@ -3,18 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/navigation_analytics"
-        android:icon="@drawable/baseline_analytics_24"
-
-        android:title="분석" />
+        android:icon="@drawable/calaender" />
 
     <item
         android:id="@+id/navigation_chat"
-        android:icon="@drawable/baseline_chat_24"
-
-        android:title="채팅" />
+        android:icon="@drawable/chat" />
 
     <item
         android:id="@+id/navigation_info"
-        android:icon="@drawable/baseline_info_24"
-        android:title="내정보" />
+        android:icon="@drawable/info" />
 </menu>
