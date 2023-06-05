@@ -92,7 +92,6 @@ public class Analytics_Photo extends AppCompatActivity {
                             // 채팅 내역 출력
                             for (int i = 0; i < photoHistoryArray.length(); i++) {
                                 JSONObject messageObj = photoHistoryArray.getJSONObject(i);
-                                String content = messageObj.getString("content");
                                 String time = messageObj.getString("time");
                                 int isUserInt = messageObj.getInt("isUser");
                                 boolean sentByUser = (isUserInt == 1); // 정수값을 boolean으로 변환
@@ -104,11 +103,8 @@ public class Analytics_Photo extends AppCompatActivity {
                                     String imageString = messageObj.getString("image");
                                     Bitmap imageBitmap = decodeBase64Image(imageString);
                                     chatMessage = new ChatMessage(imageBitmap, sentByUser, time);
-                                } else {
-                                    // 텍스트 메시지인 경우
-                                    chatMessage = new ChatMessage(content, sentByUser, time);
+                                    chatMessages.add(chatMessage);
                                 }
-                                chatMessages.add(chatMessage);
                             }
 
                             // 채팅 내역을 화면에 업데이트

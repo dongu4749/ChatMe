@@ -1,10 +1,10 @@
 package com.example.chatme.Analytics;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -13,7 +13,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.chatme.R;
-import com.example.chatme.chat.ChatMessage;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -24,13 +23,33 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.mikephil.charting.animation.Easing;
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.utils.ColorTemplate;
+
+
 public class Analytics_Emotion extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
+    private PieChart pieChart;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_analytics_emotion);
         firebaseAuth = FirebaseAuth.getInstance();
+        pieChart = findViewById(R.id.piechart);
+
         // 전달받은 날짜 정보를 가져옵니다.
         int year = getIntent().getIntExtra("year", 0);
         int month = getIntent().getIntExtra("month", 0);
@@ -68,29 +87,9 @@ public class Analytics_Emotion extends AppCompatActivity {
                             Log.d("Response", response.toString());
 
                             JSONArray emotionResults = response.getJSONArray("emotion_results");
-
-                            // 감정 분석 결과 저장
-//                            List<EmotionResult> emotionResultsList = new ArrayList<>();
-
-                            // 감정 분석 결과 출력
-                            for (int i = 0; i < emotionResults.length(); i++) {
-                                JSONObject resultObj = emotionResults.getJSONObject(i);
-                                String content = resultObj.getString("content");
-                                int isUserInt = resultObj.getInt("isUser");
-                                boolean isUser = (isUserInt == 1); // 정수값을 boolean으로 변환
-                                JSONArray emotionArray = resultObj.getJSONArray("emotion");
-                                List<Float> emotions = new ArrayList<>();
-                                for (int j = 0; j < emotionArray.length(); j++) {
-                                    emotions.add((float) emotionArray.getDouble(j));
-                                }
-
-                                // EmotionResult 객체 생성 및 리스트에 추가
-//                                EmotionResult emotionResult = new EmotionResult(content, isUser, emotions);
-//                                emotionResultsList.add(emotionResult);
-                            }
-
-//                            // 감정 분석 결과 처리
-//                            processEmotionResults(emotionResultsList);
+                            // emotionResults 로깅
+                            Log.d("EmotionResults", emotionResults.toString());
+                            updatePieChartData(emotionResults);
 
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -109,9 +108,77 @@ public class Analytics_Emotion extends AppCompatActivity {
         queue.add(request);
     }
 
-//    private void processEmotionResults(List<EmotionResult> emotionResults) {
-//        // 감정 분석 결과 처리를 수행하는 코드 작성
-//        // ...
-//    }
+    private void updatePieChartData(JSONArray emotionResults) {
+        pieChart.setUsePercentValues(true);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setExtraOffsets(5, 10, 5, 5);
+
+        pieChart.setDragDecelerationFrictionCoef(0.95f);
+
+        pieChart.setDrawHoleEnabled(false);
+        pieChart.setTransparentCircleRadius(0f);
+
+        int[] emotionCount = new int[7]; // Array to store the count of each emotion (0-6)
+
+        try {
+            // Count the occurrences of each emotion
+            for (int i = 0; i < emotionResults.length(); i++) {
+                int emotion = emotionResults.getInt(i);
+                emotionCount[emotion]++;
+            }
+
+            // Create a list of PieEntry with the counts and labels
+            ArrayList<PieEntry> yValues = new ArrayList<>();
+            for (int i = 0; i < emotionCount.length; i++) {
+                int count = emotionCount[i];
+                if (count > 0) {
+                    String label = getLabelByIndex(i);
+                    yValues.add(new PieEntry(count, label));
+                }
+            }
+
+            // Set up colors for each emotion
+            int[] colors = new int[]{
+                    Color.parseColor("#BEBEBE"), // Neutral (gray)
+                    Color.parseColor("#FF6B6B"), // Anger (light red)
+                    Color.parseColor("#FFB347"), // Joy (orange)
+                    Color.parseColor("#BA8BC8"), // Anxiety (light purple)
+                    Color.parseColor("#32CD32"), // Surprise (light green)
+                    Color.parseColor("#A4D3EE"), // Sadness (light blue)
+                    Color.parseColor("#595959") // Disgust (black)
+            };
+
+            // Create the PieDataSet with the values and colors
+            PieDataSet dataSet = new PieDataSet(yValues, "Emotion Types");
+            dataSet.setSliceSpace(3f);
+            dataSet.setSelectionShift(5f);
+            dataSet.setColors(colors);
+            dataSet.setValueTextSize(12f);
+            dataSet.setValueTextColor(Color.BLACK);
+
+            // Create the PieData object with the DataSet
+            PieData data = new PieData(dataSet);
+            data.setValueTextSize(15f);
+            data.setValueTextColor(Color.BLACK);
+
+            // Set the data to the PieChart
+            pieChart.animateY(1000, Easing.EaseInOutCubic);
+            pieChart.invalidate();
+            pieChart.setTouchEnabled(false);
+            pieChart.setData(data);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private String getLabelByIndex(int index) {
+        String[] labels = {
+                "중립", "분노", "기쁨", "불안", "놀람", "슬픔", "혐오"
+        };
+
+        return (index >= 0 && index < labels.length) ? labels[index] : null;
+    }
 
 }

@@ -127,7 +127,7 @@ public class Fragment_Analytics extends Fragment {
     }
     private void showDateDialog(int year, int month, int dayOfMonth) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("선택한 날짜");
+        builder.setTitle(year +"년 " + month + "월 " + dayOfMonth + "일");
         // getDiarySummary() 호출하여 응답 받기
         getDiarySummary(year, month, dayOfMonth, new VolleyCallback() {
             @Override
@@ -144,7 +144,7 @@ public class Fragment_Analytics extends Fragment {
                     builder.setPositiveButton("감정 분석 시각화", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(getActivity(), Analytics_Emotion.class);
+                            Intent intent = new Intent(requireActivity(), Analytics_Emotion.class);
 
                             // 선택한 날짜 정보를 Intent에 추가합니다.
                             intent.putExtra("year", year);
@@ -157,7 +157,7 @@ public class Fragment_Analytics extends Fragment {
                     builder.setNegativeButton("사진 보기", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(getActivity(), Analytics_Photo.class);
+                            Intent intent = new Intent(requireActivity(), Analytics_Photo.class);
 
                             // 선택한 날짜 정보를 Intent에 추가합니다.
                             intent.putExtra("year", year);
