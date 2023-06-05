@@ -8,12 +8,15 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/chatme_icon"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.ChatMe"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".SigninActivity"
+            android:exported="false" />
         <activity
             android:name=".Analytics.Analytics_Emotion"
             android:exported="false" />
@@ -27,7 +30,8 @@
             android:name=".HomeActivity"
             android:exported="false" />
         <activity
-            android:name=".SigninActivity"
+            android:name=".SplashActivity"
+            android:theme="@style/SplashTheme"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
