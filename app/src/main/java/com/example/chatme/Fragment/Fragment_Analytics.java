@@ -127,8 +127,7 @@ public class Fragment_Analytics extends Fragment {
     }
     private void showDateDialog(int year, int month, int dayOfMonth) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(year +"년 " + month + "월 " + dayOfMonth + "일");
-        // getDiarySummary() 호출하여 응답 받기
+        builder.setTitle(year + "년 " + month + "월 " + dayOfMonth + "일");
         getDiarySummary(year, month, dayOfMonth, new VolleyCallback() {
             @Override
             public void onSuccess(JSONArray diarySummary) {
@@ -140,35 +139,46 @@ public class Fragment_Analytics extends Fragment {
                             summary += ", ";
                         }
                     }
-                    builder.setMessage(summary); // 메시지 설정은 응답을 받은 후에 호출되어야 합니다.
-                    builder.setPositiveButton("감정 분석 시각화", new DialogInterface.OnClickListener() {
+
+                    final String finalSummary = summary;
+                    getKeyword(year, month, dayOfMonth, new VolleyCallback() {
                         @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(requireActivity(), Analytics_Emotion.class);
-
-                            // 선택한 날짜 정보를 Intent에 추가합니다.
-                            intent.putExtra("year", year);
-                            intent.putExtra("month", month);
-                            intent.putExtra("dayOfMonth", dayOfMonth);
-
-                            startActivity(intent);
+                        public void onSuccess(JSONArray keywordArray) {
+                            String keywords = "";
+                            for (int i = 0; i < keywordArray.length(); i++) {
+                                try {
+                                    keywords += keywordArray.getString(i);
+                                    if (i < keywordArray.length() - 1) {
+                                        keywords += ", ";
+                                    }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            builder.setMessage(finalSummary  + "\n\n키워드: " + keywords);
+                            builder.setPositiveButton("감정 분석 시각화", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent(requireActivity(), Analytics_Emotion.class);
+                                    intent.putExtra("year", year);
+                                    intent.putExtra("month", month);
+                                    intent.putExtra("dayOfMonth", dayOfMonth);
+                                    startActivity(intent);
+                                }
+                            });
+                            builder.setNegativeButton("사진 보기", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent(requireActivity(), Analytics_Photo.class);
+                                    intent.putExtra("year", year);
+                                    intent.putExtra("month", month);
+                                    intent.putExtra("dayOfMonth", dayOfMonth);
+                                    startActivity(intent);
+                                }
+                            });
+                            builder.create().show();
                         }
                     });
-                    builder.setNegativeButton("사진 보기", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(requireActivity(), Analytics_Photo.class);
-
-                            // 선택한 날짜 정보를 Intent에 추가합니다.
-                            intent.putExtra("year", year);
-                            intent.putExtra("month", month);
-                            intent.putExtra("dayOfMonth", dayOfMonth);
-
-                            // Activity로 전환합니다.
-                            startActivity(intent);
-                        }
-                    });
-                    builder.create().show();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -228,5 +238,55 @@ public class Fragment_Analytics extends Fragment {
 
     interface VolleyCallback {
         void onSuccess(JSONArray diarySummary);
+    }
+
+    private void getKeyword(int year, int month, int dayOfMonth, VolleyCallback callback) {
+        String url = "http://10.0.2.2:5000/keyword";
+
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        String uid = currentUser.getUid();
+
+        JSONObject jsonParams = new JSONObject();
+        try {
+            jsonParams.put("user_id", uid);
+            jsonParams.put("year", year);
+            jsonParams.put("month", month);
+            jsonParams.put("dayOfMonth", dayOfMonth);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // 로그로 요청 파라미터 확인
+        Log.d("Request Params", jsonParams.toString());
+
+        // POST 요청 보내기
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonParams,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            Log.d("Response", response.toString());
+
+                            String keyword = response.getString("keyword"); // JSONArray가 아닌 문자열로 값을 가져옴
+
+                            JSONArray jsonArray = new JSONArray();
+                            jsonArray.put(keyword);
+
+                            callback.onSuccess(jsonArray);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // 오류 처리
+                    }
+                });
+
+        // 요청 큐에 요청 추가
+        RequestQueue queue = Volley.newRequestQueue(getActivity().getApplicationContext());
+        queue.add(request);
     }
 }

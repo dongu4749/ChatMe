@@ -118,42 +118,30 @@ public class Analytics_Emotion extends AppCompatActivity {
         pieChart.setDrawHoleEnabled(false);
         pieChart.setTransparentCircleRadius(0f);
 
-        int[] emotionCount = new int[7]; // Array to store the count of each emotion (0-6)
-
         try {
-            // Count the occurrences of each emotion
+            // Calculate frequency of each emotion
+            int[] emotionCounts = new int[7];
             for (int i = 0; i < emotionResults.length(); i++) {
-                int emotion = emotionResults.getInt(i);
-                emotionCount[emotion]++;
+                int emotionIndex = Integer.parseInt(emotionResults.getString(i));
+                emotionCounts[emotionIndex]++;
             }
-
-            // Create a list of PieEntry with the counts and labels
-            ArrayList<PieEntry> yValues = new ArrayList<>();
-            for (int i = 0; i < emotionCount.length; i++) {
-                int count = emotionCount[i];
-                if (count > 0) {
-                    String label = getLabelByIndex(i);
-                    yValues.add(new PieEntry(count, label));
+            List<Integer> colors = new ArrayList<>();
+            // Prepare data entries for the PieChart
+            List<PieEntry> entries = new ArrayList<>();
+            for (int i = 0; i < emotionCounts.length; i++) {
+                if (emotionCounts[i] > 0) {
+                    float percentage = (float) emotionCounts[i] / emotionResults.length() * 100;
+                    entries.add(new PieEntry(percentage, getLabelByIndex(i)));
+                    colors.add(getColorByIndex(i)); // Add color based on emotion index
                 }
             }
 
-            // Set up colors for each emotion
-            int[] colors = new int[]{
-                    Color.parseColor("#BEBEBE"), // Neutral (gray)
-                    Color.parseColor("#FF6B6B"), // Anger (light red)
-                    Color.parseColor("#FFB347"), // Joy (orange)
-                    Color.parseColor("#BA8BC8"), // Anxiety (light purple)
-                    Color.parseColor("#32CD32"), // Surprise (light green)
-                    Color.parseColor("#A4D3EE"), // Sadness (light blue)
-                    Color.parseColor("#595959") // Disgust (black)
-            };
-
             // Create the PieDataSet with the values and colors
-            PieDataSet dataSet = new PieDataSet(yValues, "Emotion Types");
+            PieDataSet dataSet = new PieDataSet(entries, "Emotion Types");
             dataSet.setSliceSpace(3f);
             dataSet.setSelectionShift(5f);
-            dataSet.setColors(colors);
             dataSet.setValueTextSize(12f);
+            dataSet.setColors(colors);
             dataSet.setValueTextColor(Color.BLACK);
 
             // Create the PieData object with the DataSet
@@ -173,6 +161,7 @@ public class Analytics_Emotion extends AppCompatActivity {
     }
 
 
+
     private String getLabelByIndex(int index) {
         String[] labels = {
                 "중립", "분노", "기쁨", "불안", "놀람", "슬픔", "혐오"
@@ -180,5 +169,19 @@ public class Analytics_Emotion extends AppCompatActivity {
 
         return (index >= 0 && index < labels.length) ? labels[index] : null;
     }
+    private int getColorByIndex(int index) {
+        int[] colors = new int[]{
+                Color.parseColor("#BEBEBE"), // 중립 (gray)
+                Color.parseColor("#FF6B6B"), // 분노 (light red)
+                Color.parseColor("#FFA500"), // 기쁨 (yellow)
+                Color.parseColor("#BA8BC8"), // 불안 (light purple)
+                Color.parseColor("#00FF00"), // 놀람 (light green)
+                Color.parseColor("#87CEEB"), // 슬픔 (light blue)
+                Color.parseColor("#000000") // 혐오 (black)
+        };
+
+        return (index >= 0 && index < colors.length) ? colors[index] : Color.BLACK;
+    }
+
 
 }
