@@ -137,7 +137,7 @@ public class Analytics_Emotion extends AppCompatActivity {
             }
 
             // Create the PieDataSet with the values and colors
-            PieDataSet dataSet = new PieDataSet(entries, "Emotion Types");
+            PieDataSet dataSet = new PieDataSet(entries, "감정 종류");
             dataSet.setSliceSpace(3f);
             dataSet.setSelectionShift(5f);
             dataSet.setValueTextSize(12f);

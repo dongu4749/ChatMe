@@ -149,13 +149,13 @@ public class Fragment_Analytics extends Fragment {
                                 try {
                                     keywords += keywordArray.getString(i);
                                     if (i < keywordArray.length() - 1) {
-                                        keywords += ", ";
+                                        keywords += " ";
                                     }
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
                             }
-                            builder.setMessage(finalSummary  + "\n\n키워드: " + keywords);
+                            builder.setMessage(finalSummary  + "\n\n" + keywords);
                             builder.setPositiveButton("감정 분석 시각화", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
@@ -267,12 +267,16 @@ public class Fragment_Analytics extends Fragment {
                         try {
                             Log.d("Response", response.toString());
 
-                            String keyword = response.getString("keyword"); // JSONArray가 아닌 문자열로 값을 가져옴
+                            JSONArray  keywordArray = response.getJSONArray("keyword"); // JSONArray가 아닌 문자열로 값을 가져옴
 
-                            JSONArray jsonArray = new JSONArray();
-                            jsonArray.put(keyword);
+                            JSONArray modifiedArray = new JSONArray();
+                            for (int i = 0; i < keywordArray.length(); i++) {
+                                String keyword = keywordArray.getString(i);
+                                String modifiedKeyword = "#" + keyword;
+                                modifiedArray.put(modifiedKeyword);
+                            }
 
-                            callback.onSuccess(jsonArray);
+                            callback.onSuccess(modifiedArray);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }

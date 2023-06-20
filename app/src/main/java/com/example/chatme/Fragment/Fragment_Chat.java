@@ -13,6 +13,8 @@ import android.provider.MediaStore;
 import android.util.Base64;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
@@ -25,6 +27,8 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 
 import com.android.volley.Request;
@@ -155,6 +159,12 @@ public class  Fragment_Chat extends Fragment {
         sendButton = view.findViewById(R.id.send_button);
         chatListView = view.findViewById(R.id.chat_listview);
 
+        Toolbar myToolbar = (Toolbar) view.findViewById(R.id.chat_toolbar);
+        setHasOptionsMenu(true);
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        activity.setSupportActionBar(myToolbar);
+        activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
+
         Button plusButton = view.findViewById(R.id.plus_button);
         getChatHistory();
         plusButton.setOnClickListener(new View.OnClickListener() {
@@ -162,7 +172,7 @@ public class  Fragment_Chat extends Fragment {
             public void onClick(View v) {
                 // 사진 전송 로직을 처리하는 메서드를 호출합니다.
                 sendPhoto();
-                // 리스트뷰 자동 스크롤
+                // 리스트뷰 자동       스크롤
                 chatListView.setSelection(chatAdapter.getCount() - 1);
             }
         });
